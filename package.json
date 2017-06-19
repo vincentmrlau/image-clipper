@@ -1,0 +1,26 @@
+{
+  "name": "image-clipper",
+  "version": "1.0.0",
+  "description": "a simple imgae clipper",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vincentmrlau/image-clipper.git"
+  },
+  "keywords": [
+    "image",
+    "editor"
+  ],
+  "author": "Vincent lau",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/vincentmrlau/image-clipper/issues"
+  },
+  "homepage": "https://github.com/vincentmrlau/image-clipper#readme",
+  "devDependencies": {
+    "gulp": "^3.9.1"
+  }
+}

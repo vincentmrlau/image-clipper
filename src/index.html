@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>image-clipper</title>
+    <style>
+        body{
+            background-color: wheat;
+        }
+        #clipper-container{
+            height: 500px;
+            width: 500px;
+            max-width: 100%;
+            background-color: white;
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <div id="clipper-container"></div>
+    <p>
+        controller:<br>
+        <label>choose an image:<input type="file"></label><br>
+        <button>clip!</button><br>
+        result:
+        <img id="result" src="" alt="">
+    </p>
+</body>
+
+<script>
+
+    class Clipper {
+        constructor(container, _options){
+            let options = _options||{},
+                holeSize
+            const WIDTH = container.offsetWidth
+            const HEIGHT = container.offsetHeight
+            // set a canvas over the container
+            this.canvas = document.createElement('canvas')
+            this.canvas.width = WIDTH
+            this.canvas.height = HEIGHT
+            container.appendChild(this.canvas)
+            // record massage
+            this.width = WIDTH
+            this.height = HEIGHT
+            this.cover = {
+                shape: options.coverShape||'rect',
+                color: options.coverColor||'#000000',
+                opacity: options.coverOpacity||0.3,
+                size: options.coverSize||0.8
+            }
+            if (WIDTH <= HEIGHT) {
+                holeSize = WIDTH*this.cover.size
+            } else {
+                holeSize = HEIGHT*this.cover.size
+            }
+            console.log(holeSize)
+            this.startX = (WIDTH - holeSize)*0.5
+            this.endX = WIDTH - (WIDTH - holeSize)*0.5
+            this.startY = (HEIGHT - holeSize)*0.5
+            this.endY = HEIGHT - (HEIGHT - holeSize)*0.5
+            this.holeSize = holeSize
+            // img status
+            this.imgX = 0
+            this.imgY = 0
+            this.imgScale = 1
+            // the img put in editor
+            this.img = new Image()
+            this.img.crossOrigin = '*'
+            // start
+            this.ctx = this.canvas.getContext('2d')
+            this.drawCover(this.ctx)
+
+        }
+        drawCover(ctx){
+            console.log('draw cover')
+
+            ctx.save()
+            ctx.globalAlpha = this.cover.opacity
+            ctx.fillStyle = this.cover.color
+            ctx.fillRect(0, 0, this.width, this.height)
+            console.log(this.startX, this.startY, this.endX, this.endY)
+            // clip
+            ctx.beginPath()
+            switch (this.cover.shape) {
+                case 'rect':
+                    console.log('s')
+                    ctx.rect(this.startX, this.startY, this.holeSize , this.holeSize)
+                    break
+                case 'circle':
+                    ctx.arc(this.startX + this.holeSize *0.5, this.startY + this.holeSize *0.5, this.holeSize*0.5, 0, Math.PI*2, false)
+                    break
+                default:
+            }
+            ctx.globalAlpha = 1
+            ctx.globalCompositeOperation = 'destination-out'
+            ctx.fill()
+            ctx.restore()
+        }
+        drawImg(ctx, url){
+
+        }
+    }
+
+
+    let container = document.getElementById('clipper-container')
+    document.body.onload = function () {
+        let clipper = new Clipper(container)
+    }
+</script>
+</html>
