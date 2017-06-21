@@ -11,7 +11,7 @@ let reload = browserSync.reload
 gulp.task('server', function () {
     browserSync({
         server: {
-            baseDir: 'src'
+            baseDir: ''
         }
     })
     gulp.watch(['**/*.*'], {cwd: 'src'}, reload)
