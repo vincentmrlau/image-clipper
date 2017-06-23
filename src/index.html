@@ -17,308 +17,33 @@
             background-color: white;
             position: relative;
         }
+        img{
+            border: solid brown 1px;
+        }
     </style>
 </head>
 <body>
     <div id="clipper-container"></div>
     <p>
-        controller:
+        controller:<br>
         <label>choose an image:<input id="file" type="file" accept="image/*"></label><br>
+        <button id="clockwise">rotate-clockwise</button><button id="anticlockwise">rotate-anticlockwise</button>
+        <br>
         <button id="clip">clip!</button><br>
         result:
         <br>
         <img id="result" src="" alt="">
     </p>
+    <script src="Clipper.js"></script>
     <script>
-
-        class Clipper {
-            constructor(container, _options){
-                let options = _options||{},
-                    holeSize
-                const WIDTH = container.offsetWidth
-                const HEIGHT = container.offsetHeight
-                // set a canvas over the container
-                this.canvas = document.createElement('canvas')
-                this.canvas.width = WIDTH
-                this.canvas.height = HEIGHT
-                container.appendChild(this.canvas)
-                // record massage
-                this.width = WIDTH
-                this.height = HEIGHT
-                // output canvas
-                this.outputCanvas = document.createElement('canvas')
-                // cover
-                this.cover = {
-                    shape: options.coverShape||'circle',
-                    color: options.coverColor||'#000000',
-                    opacity: options.coverOpacity||0.8,
-                    size: options.coverSize||0.8
-                }
-                if (WIDTH <= HEIGHT) {
-                    holeSize = WIDTH*this.cover.size
-                } else {
-                    holeSize = HEIGHT*this.cover.size
-                }
-                this.coverStartX = (WIDTH - holeSize)*0.5
-                this.coverStartY = (HEIGHT - holeSize)*0.5
-                this.holeSize = holeSize
-                // img status
-                this.imgX = 0
-                this.imgY = 0
-                this.imgScale = 1
-                // nextState
-                this.imgNextX = 0
-                this.imgNextY = 0
-                this.imgNextScale = 1
-                // the img put in editor
-                this.img = new Image()
-                this.img.crossOrigin = '*'
-                // start
-                this.ctx = this.canvas.getContext('2d')
-                this.drawCover(this.ctx)
-//                this.drawImg('/images/particle.png')
-                // mouse wheel scroll to scale
-                this.canvas.addEventListener('mousewheel', (event) => {
-                    let e = event || window.event,
-                        increment = 0
-                    e.preventDefault()
-                    if (e.wheelDelta > 0) {
-                        // bow up
-                        increment = 0.005
-                    } else {
-                        // min scale : 0.01
-                        (this.imgScale >= 0.02) && (increment = -0.005)
-                    }
-                    // compute
-                    this.imgNextScale += increment
-                    this.imgNextX -= increment*this.img.width*0.5
-                    this.imgNextY -= increment*this.img.height*0.5
-                })
-                // move with mouse
-                let clickX = 0,
-                    clickY = 0,
-                    clickPress = false
-                this.canvas.addEventListener('mousedown', (event) => {
-                    let e = event || window.event
-                    clickX = e.clientX
-                    clickY = e.clientY
-                    clickPress = true
-                })
-                this.canvas.addEventListener('mousemove', (event) => {
-                    if (!clickPress) {
-                        return false
-                    }
-                    let e = event || window.event,
-                        tempX = e.clientX,
-                        tempY = e.clientY,
-                        incrementX = tempX - clickX,
-                        incrementY = tempY - clickY
-                    this.imgNextX += incrementX
-                    this.imgNextY += incrementY
-                    clickX = tempX
-                    clickY = tempY
-                })
-                this.canvas.addEventListener('mouseup', (event) => {
-                    clickPress = false
-                })
-                // move && scale with touch
-                let touch1X = 0,
-                    touch2X = 0,
-                    touch1Y = 0,
-                    touch2Y = 0,
-                    touching = false
-                this.canvas.addEventListener('touchstart', (event) => {
-                    let e = event || window.event,
-                        touches = e.touches
-                    e.preventDefault()
-                    touch1X = touches[0].clientX
-                    touch1Y = touches[0].clientY
-                    touch2X = touches[1]?touches[1].clientX:undefined
-                    touch2Y = touches[1]?touches[1].clientY:undefined
-                    // status
-                    touching = true
-                    clickPress = false
-                })
-                this.canvas.addEventListener('touchmove', (event) => {
-                    if (!touching){
-                        return false
-                    }
-                    let e = event || window.event,
-                        touches = e.touches,
-                        temp1X = touches[0].clientX,
-                        temp1Y = touches[0].clientY,
-                        temp2X = touches[1]?touches[1].clientX:undefined,
-                        temp2Y = touches[1]?touches[1].clientX:undefined,
-                        increment1X = temp1X - touch1X,
-                        increment1Y = temp1Y - touch1Y
-                    if (temp2X === undefined) {
-                        // move
-                        this.imgNextX += increment1X
-                        this.imgNextY += increment1Y
-                    } else {
-                        // scale
-                        let disBef = Math.round(Math.sqrt(Math.pow(touch1X - touch2X, 2)+ Math.pow(touch1Y - touch2Y, 2))),
-                            disNow = Math.round(Math.sqrt(Math.pow(temp1X - temp2X, 2) + Math.pow(temp1Y - temp2Y, 2)))
-                        let incrementScale = (disNow - disBef)/(this.width)
-                        this.imgNextScale += incrementScale
-                        if(this.imgNextScale <= 0.01){
-                            this.imgNextScale = 0.01
-                            incrementScale = 0
-                        }
-                        this.imgNextX -= incrementScale*this.img.width*0.5
-                        this.imgNextY -= incrementScale*this.img.height*0.5
-                    }
-                    //save
-                    touch1X = temp1X
-                    touch2X = temp2X
-                    touch1Y = temp1Y
-                    touch2Y = temp2Y
-                })
-
-                // start listening
-                let aq = () => {
-                    this.redraw(this.ctx)
-                    requestAnimationFrame(aq)
-                }
-                aq()
-            }
-            drawCover(ctx){
-                ctx.save()
-                ctx.globalAlpha = this.cover.opacity
-                ctx.fillStyle = this.cover.color
-                ctx.fillRect(0, 0, this.width, this.height)
-                // clip
-                ctx.beginPath()
-                switch (this.cover.shape) {
-                    case 'rect':
-                        ctx.rect(this.coverStartX, this.coverStartY, this.holeSize , this.holeSize)
-                        break
-                    case 'circle':
-                        ctx.arc(this.coverStartX + this.holeSize *0.5, this.coverStartY + this.holeSize *0.5, this.holeSize*0.5, 0, Math.PI*2, false)
-                        break
-                    default:
-                }
-                ctx.globalAlpha = 1
-                ctx.globalCompositeOperation = 'destination-out'
-                ctx.fill()
-                ctx.restore()
-            }
-            drawImg(url){
-                let ctx = this.ctx
-                this.img.onload = () => {
-                    let rateImg = this.img.width/this.img.height,
-                        rateCanvas = this.width/this.height,
-                        x,
-                        y,
-                        width,
-                        height,
-                        scale
-                    if (rateImg >= rateCanvas) {
-                        scale = this.width/this.img.width
-                    } else {
-                        scale = this.height/this.img.height
-                    }
-                    width = this.img.width * scale
-                    height = this.img.height*scale
-                    x = (this.width - width) * 0.5
-                    y = (this.height - height) * 0.5
-                    // draw
-                    ctx.save()
-                    // clear
-                    ctx.clearRect(0, 0, this.width, this.height)
-                    this.drawCover(ctx)
-                    ctx.globalCompositeOperation = 'destination-over'
-                    ctx.drawImage(this.img, x, y, width, height)
-                    ctx.restore()
-                    // save data
-                    this.imgX = x
-                    this.imgY = y
-                    this.imgScale = scale
-                    this.imgNextX = x
-                    this.imgNextY = y
-                    this.imgNextScale = scale
-                }
-                this.img.src = url
-            }
-            // scale OR move
-            redraw(ctx){
-                // do nothing when no changed
-                if (this.imgX === this.imgNextX
-                    && this.imgY === this.imgNextY
-                    && this.imgScale === this.imgNextScale) {
-                    return false
-                }
-                // redraw when change happen
-                // clear
-                ctx.clearRect(0, 0, this.width, this.height)
-                this.drawCover(ctx)
-                let width = this.imgNextScale * this.img.width,
-                    height = this.imgNextScale * this.img.height
-                // draw
-                ctx.save()
-                ctx.globalCompositeOperation = 'destination-over'
-                ctx.drawImage(this.img, this.imgNextX, this.imgNextY, width, height)
-                ctx.restore()
-                this.imgX = this.imgNextX
-                this.imgY = this.imgNextY
-                this.imgScale = this.imgNextScale
-            }
-            /*
-             * clip
-             * */
-            clip(cb, options ){
-                let _options = options || {}
-                // compute
-                let sx = (this.coverStartX - this.imgX)/this.imgScale,
-                    sy = (this.coverStartY - this.imgY)/this.imgScale,
-                    sWidth = this.holeSize/this.imgScale,
-                    sHeight = this.holeSize/this.imgScale,
-                    dx = 0,
-                    dy = 0,
-                    dWidth = _options.outputSize || 200,
-                    dHeight = _options.outputSize || 200,
-                    format = _options.format || 'base64',
-                    quality = _options.quality || 1,
-                    type = _options.type || 'image/png',
-                    _ctx
-                // set canvas size
-                this.outputCanvas.width = dWidth
-                this.outputCanvas.height = dHeight
-                // 兼容不能sx，sy不能使用负数的版本
-                if( sx < 0 ) {
-                    sx = 0
-                    dx = (this.imgX - this.coverStartX)*(dWidth/this.holeSize)
-                }
-                if (sy < 0) {
-                    sy = 0
-                    dy = (this.imgY - this.coverStartY)*(dHeight/this.holeSize)
-                }
-                // draw
-                _ctx = this.outputCanvas.getContext('2d')
-                console.log(sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight)
-                _ctx.drawImage(this.img, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight)
-                // to data url
-                let data = this.outputCanvas.toDataURL(type, quality)
-                if (format === 'base64') {
-                    cb(data)
-                } else if (format === 'blob') {
-                    let arr = data.split(','),
-                        mine = arr[0].match(/:(.*?);/)[1],
-                        bstr = atob(arr[1]),
-                        n = bstr.length,
-                        u8arr = new Uint8Array(n)
-                    while (n--) {
-                        u8arr[n] = bstr.charCodeAt(n)
-                    }
-                    let blob = new Blob([u8arr], {type:mine})
-                    cb(blob)
-                }
-            }
-        }
-
+        /*
+        * demo by vincent lau
+        * */
         let container = document.getElementById('clipper-container')
         document.body.onload = function () {
-            let clipper = new Clipper(container)
+            let clipper = new Clipper(container, {
+                coverShape: 'circle'
+            })
             document.getElementById('file').onchange = function (event) {
                 console.log(event.target.files[0])
                 let fileReader = new FileReader()
@@ -327,7 +52,15 @@
                 }
                 fileReader.readAsDataURL(event.target.files[0])
             }
-            // click
+//            clipper.drawImg('/images/particle.png')
+            //rotate
+            document.getElementById('clockwise').onclick = function () {
+                clipper.nextRoatetion -= 0.1
+            }
+            document.getElementById('anticlockwise').onclick = function () {
+                clipper.nextRoatetion += 0.1
+            }
+            // clip
             document.getElementById('clip').onclick = function () {
                 clipper.clip(function (data) {
 //                    console.log(data)
