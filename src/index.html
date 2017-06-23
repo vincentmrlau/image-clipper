@@ -14,7 +14,7 @@
             height: 500px;
             width: 400px;
             max-width: 100%;
-            background-color: white;
+            /*background-color: white;*/
             position: relative;
             margin: 0 auto;
         }
@@ -49,10 +49,12 @@
         let container = document.getElementById('clipper-container')
         document.body.onload = function () {
             let clipper = new Clipper(container, {
-                coverShape: 'circle'
+                coverShape: 'circle',
+                coverColor: '#ff0000',
+                coverSize: 0.8,
+                coverOpacity: 0.8
             })
             document.getElementById('file').onchange = function (event) {
-                console.log(event.target.files[0])
                 let fileReader = new FileReader()
                 fileReader.onload = function (e) {
                     clipper.drawImg(e.target.result)
@@ -70,7 +72,7 @@
             // clip
             document.getElementById('clip').onclick = function () {
                 clipper.clip(function (data) {
-//                    console.log(data)
+//                    toBlob
 //                    let fileReader = new FileReader()
 //                    fileReader.onload = function (e) {
 //                        document.getElementById('result').src = e.target.result

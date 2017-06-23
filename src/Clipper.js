@@ -1,6 +1,16 @@
 
 (function (window) {
     window.Clipper = class {
+        /*
+        * constructor:
+        * container: the container for this editor
+        * _options: * means default
+        *   coverShape: *'circle' 'rect'
+        *   coverColor: *'#000000' available: HEX COLOR
+        *   coverOpacity: *0.8 available: 0 ~ 1
+        *   coverSize: *0.8 available: 0 ~ 1
+        * more is coming
+        * */
         constructor(container, _options){
             let options = _options||{},
                 holeSize
@@ -203,6 +213,9 @@
             ctx.fill()
             ctx.restore()
         }
+        /*
+        * url: the img src
+        * */
         drawImg(url){
             let ctx = this.ctx
             this.img.onload = () => {
@@ -281,6 +294,12 @@
         }
         /*
          * clip
+         * cb: callback, arg: base64 or blob
+         * options: * for default
+         *   outputSize: the output image size, * 200
+         *   format: * 'base64' , 'blob'
+         *   quality: 0 ~ 2
+         *   type: * 'image/png' , ...
          * */
         clip(cb, options ){
             let _options = options || {}
@@ -318,7 +337,9 @@
             // to data url
             let data = this.outputCanvas.toDataURL(type, quality)
             if (format === 'base64') {
-                cb(data)
+                if (cb) {
+                    cb(data)
+                }
             } else if (format === 'blob') {
                 let arr = data.split(','),
                     mine = arr[0].match(/:(.*?);/)[1],
@@ -329,7 +350,9 @@
                     u8arr[n] = bstr.charCodeAt(n)
                 }
                 let blob = new Blob([u8arr], {type:mine})
-                cb(blob)
+                if (cb) {
+                    cb(blob)
+                }
             }
         }
     }

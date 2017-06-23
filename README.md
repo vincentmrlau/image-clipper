@@ -1,4 +1,4 @@
 #	IMAGE CLIPPER
-> 图片编辑器，事实上是头像编辑器，是为编辑头像开发的
+> [demo](https://vincentmrlau.github.io/image-clipper/src/)
 > 
-> 内置了鼠标和（移动端）手势操作
+> 一款图片编辑器
