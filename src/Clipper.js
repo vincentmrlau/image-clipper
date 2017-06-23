@@ -228,6 +228,8 @@
                 ctx.clearRect(0, 0, this.width, this.height)
                 this.drawCover(ctx)
                 ctx.globalCompositeOperation = 'destination-over'
+                this.rotation = 0
+                this.nextRoatetion =0
                 let tempY = y - 0.5*(width*Math.sin(this.rotation) - height + height*Math.cos(this.rotation))
                 let tempX = x + 0.5*(width - width*Math.cos(this.rotation) + height*Math.sin(this.rotation))
                 ctx.translate(tempX,tempY)
