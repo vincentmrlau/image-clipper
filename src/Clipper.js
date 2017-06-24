@@ -298,7 +298,7 @@
          * options: * for default
          *   outputSize: the output image size, * 200
          *   format: * 'base64' , 'blob'
-         *   quality: 0 ~ 2
+         *   quality: * 1, 0 ~ 1
          *   type: * 'image/png' , ...
          * */
         clip(cb, options ){
