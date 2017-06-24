@@ -1,5 +1,5 @@
 #	IMAGE CLIPPER 图片裁剪器
-![](https://img.shields.io/badge/vertion-1.0.0-green.svg)
+![](https://img.shields.io/badge/version-1.0.0-green.svg)
 
 > image clipper, headshot editor 图片裁剪工具， 头像编辑器
 > 
