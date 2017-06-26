@@ -163,4 +163,4 @@ clipper.nextRotate = rotate
 ```
 
 ## MORE 更多
-*	it is in ES6, parse with babel if needed, 如果有需要，用babel转出es5或其他版本
+*	it is in ES6, parse with babel if needed, 如果有需要，用babel转成es5或其他版本
