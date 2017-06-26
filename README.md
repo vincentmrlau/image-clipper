@@ -153,7 +153,7 @@ clipper.imgNextScale = scale
 
 **extend 扩展:** 
 
-```
+``` javascript
 let clipper = new Clipper(container)
 clipper.drawImg(url)
 //read rotate 获取缩放比例 ： 
@@ -164,3 +164,7 @@ clipper.nextRotate = rotate
 
 ## MORE 更多
 *	it is in ES6, parse with babel if needed, 如果有需要，用babel转成es5或其他版本
+
+##	TODO
+
+*	[] anti-aliasing 抗锯齿
