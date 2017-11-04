@@ -20,26 +20,20 @@
                 holeSize
             let WIDTH = container.offsetWidth
             let HEIGHT = container.offsetHeight
+            // set a cover canvas over the container
+            this.coverCanvas = document.createElement('canvas')
+            this.coverCanvas.width = WIDTH
+            this.coverCanvas.height = HEIGHT
+            this.coverCanvas.style.position = 'absolute'
+            this.coverCanvas.style.zIndex = 1
+            container.appendChild(this.coverCanvas)
+            this.coverCtx = this.coverCanvas.getContext('2d')
             // set a canvas over the container
             this.canvas = document.createElement('canvas')
             this.canvas.width = WIDTH
             this.canvas.height = HEIGHT
             container.appendChild(this.canvas)
             this.ctx = this.canvas.getContext('2d')
-            // smooth
-            // this.ctx.imageSmoothingEnabled = true
-            // // if (window.devicePixelRatio) {
-            // //     this.canvas.style.width = WIDTH + 'px'
-            // //     this.canvas.style.height = HEIGHT+ 'px'
-            // //     WIDTH = WIDTH*window.devicePixelRatio
-            // //     HEIGHT = HEIGHT*window.devicePixelRatio
-            // //     this.ctx.scale(window.devicePixelRatio,window.devicePixelRatio)
-            // // }
-            // this.canvas.style.width = WIDTH + 'px'
-            // this.canvas.style.height = HEIGHT+ 'px'
-            // WIDTH = WIDTH*8
-            // HEIGHT = HEIGHT*8
-            // this.ctx.scale(8,8)
             // record massage
             this.width = WIDTH
             this.height = HEIGHT
@@ -69,14 +63,18 @@
             this.imgNextX = 0
             this.imgNextY = 0
             this.imgNextScale = 1
-            this.nextRoatetion = 0
+            this.nextRotation = 0
+            // the originPoint of rotation and scale
+            this.originPoint = {
+            
+            }
             // the img put in editor
             this.img = new Image()
             this.img.crossOrigin = '*'
             // start
             this.drawCover(this.ctx)
             // mouse wheel scroll to scale
-            this.canvas.addEventListener('mousewheel', (event) => {
+            this.coverCanvas.addEventListener('mousewheel', (event) => {
                 let e = event || window.event,
                     increment = 0
                 e.preventDefault()
@@ -96,13 +94,13 @@
             let clickX = 0,
                 clickY = 0,
                 clickPress = false
-            this.canvas.addEventListener('mousedown', (event) => {
+            this.coverCanvas.addEventListener('mousedown', (event) => {
                 let e = event || window.event
                 clickX = e.clientX
                 clickY = e.clientY
                 clickPress = true
             })
-            this.canvas.addEventListener('mousemove', (event) => {
+            this.coverCanvas.addEventListener('mousemove', (event) => {
                 if (!clickPress) {
                     return false
                 }
@@ -116,7 +114,7 @@
                 clickX = tempX
                 clickY = tempY
             })
-            this.canvas.addEventListener('mouseup', (event) => {
+            this.coverCanvas.addEventListener('mouseup', (event) => {
                 clickPress = false
             })
             // move && scale with touch
@@ -126,7 +124,7 @@
                 touch2Y = 0,
                 touching = false,
                 multiTouch = false
-            this.canvas.addEventListener('touchstart', (event) => {
+            this.coverCanvas.addEventListener('touchstart', (event) => {
                 let e = event || window.event,
                     touches = e.touches
                 e.preventDefault()
@@ -141,7 +139,7 @@
                     multiTouch = true
                 }
             })
-            this.canvas.addEventListener('touchmove', (event) => {
+            this.coverCanvas.addEventListener('touchmove', (event) => {
                 if (!touching){
                     return false
                 }
@@ -173,16 +171,15 @@
                     let angleBF = Math.atan2(touch2Y - touch1Y, touch2X - touch1X),
                         angleNow = Math.atan2(temp2Y - temp1Y, temp2X - temp1X),
                         incrementAngle = angleNow - angleBF
-                    this.nextRoatetion += incrementAngle
+                    this.nextRotation += incrementAngle
                 }
                 //save
-
                 touch1X = temp1X
                 touch2X = temp2X
                 touch1Y = temp1Y
                 touch2Y = temp2Y
             })
-            this.canvas.addEventListener('touchend', function () {
+            this.coverCanvas.addEventListener('touchend', function () {
                 // status
                 touching = false
                 clickPress = false
@@ -190,111 +187,125 @@
             })
 
             // start listening
-            let aq = () => {
+            let af = () => {
+                if (typeof options.beforeAF === 'function') {
+                    options.beforeAF.call()
+                }
                 this.redraw(this.ctx)
-                requestAnimationFrame(aq)
+                if (typeof options.afterAF === 'function') {
+                    options.afterAF.call()
+                }
+                requestAnimationFrame(af)
             }
-            aq()
+          af()
         }
-        drawCover(ctx){
-            ctx.save()
-            ctx.globalAlpha = this.cover.opacity
-            ctx.fillStyle = this.cover.color
-            ctx.fillRect(0, 0, this.width, this.height)
+        drawCover(){
+            this.coverCtx.save()
+            this.coverCtx.globalAlpha = this.cover.opacity
+            this.coverCtx.fillStyle = this.cover.color
+            this.coverCtx.fillRect(0, 0, this.width, this.height)
             // clip
-            ctx.beginPath()
+            this.coverCtx.beginPath()
             switch (this.cover.shape) {
                 case 'rect':
-                    ctx.rect(this.coverStartX, this.coverStartY, this.holeSize , this.holeSize)
+                    this.coverCtx.rect(this.coverStartX, this.coverStartY, this.holeSize , this.holeSize)
                     break
                 case 'circle':
-                    ctx.arc(this.coverStartX + this.holeSize *0.5, this.coverStartY + this.holeSize *0.5, this.holeSize*0.5, 0, Math.PI*2, false)
+                    this.coverCtx.arc(this.coverStartX + this.holeSize *0.5, this.coverStartY + this.holeSize *0.5, this.holeSize*0.5, 0, Math.PI*2, false)
                     break
                 default:
             }
-            ctx.globalAlpha = 1
-            ctx.globalCompositeOperation = 'destination-out'
-            ctx.fill()
+            this.coverCtx.globalAlpha = 1
+            this.coverCtx.globalCompositeOperation = 'destination-out'
+            this.coverCtx.fill()
+            this.coverCtx.restore()
+        }
+        /*
+        * standard draw image method
+        * */
+        standardDraw (_ctx, options = {}) {
+            let ctx = _ctx || this.ctx
+            let
+                canvasHeight = options.height||this.height,
+                canvasWidth = options.width||this.width,
+                imgNextX = options.imgNextX||this.imgNextX,
+                imgNextY = options.imgNextY||this.imgNextY,
+                imgNextScale = options.imgNextScale||this.imgNextScale,
+                nextRotation = options.rotation||this.nextRotation
+            // draw
+            let
+              height = imgNextScale * this.img.height,
+              width = imgNextScale * this.img.width
+            ctx.save()
+            // clear
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight)
+            ctx.globalCompositeOperation = 'destination-over'
+            let tempY = imgNextY - 0.5*(width*Math.sin(nextRotation) - height + height*Math.cos(nextRotation))
+            let tempX = imgNextX + 0.5*(width - width*Math.cos(nextRotation) + height*Math.sin(nextRotation))
+            ctx.translate(tempX,tempY)
+            ctx.rotate(nextRotation)
+            ctx.scale(imgNextScale,imgNextScale)
+            ctx.drawImage(this.img, 0, 0, this.img.width, this.img.height)
+            // smooth
+            ctx.imageSmoothingEnabled = true;
+            ctx.mozImageSmoothingEnabled = true;
+            ctx.webkitImageSmoothingEnabled = true;
+            ctx.msImageSmoothingEnabled = true;
             ctx.restore()
+            // save data
+            if (options.doNotSave) {} else {
+              this.imgX = imgNextX
+              this.imgY = imgNextY
+              this.imgScale = imgNextScale
+              this.rotation = nextRotation
+            }
+            console.log(imgNextScale)
         }
         /*
         * url: the img src
         * */
-        drawImg(url){
-            let ctx = this.ctx
+        drawImg(url, _ctx, options = {}){
+            let ctx = _ctx||this.ctx
+            // 处理选项
+            let canvasHeight = options.height|| this.height
+            let canvasWidth = options.width|| this.width
             this.img.onload = () => {
                 let rateImg = this.img.width/this.img.height,
-                    rateCanvas = this.width/this.height,
+                    rateCanvas = canvasWidth/canvasHeight,
                     x,
                     y,
                     width,
                     height,
                     scale
                 if (rateImg >= rateCanvas) {
-                    scale = this.width/this.img.width
+                    scale = canvasWidth/this.img.width
                 } else {
-                    scale = this.height/this.img.height
+                    scale = canvasHeight/this.img.height
                 }
                 width = this.img.width * scale
                 height = this.img.height*scale
-                x = (this.width - width) * 0.5
-                y = (this.height - height) * 0.5
-                // draw
-                ctx.save()
-                // clear
-                ctx.clearRect(0, 0, this.width, this.height)
-                this.drawCover(ctx)
-                ctx.globalCompositeOperation = 'destination-over'
-                this.rotation = 0
-                this.nextRoatetion =0
-                let tempY = y - 0.5*(width*Math.sin(this.rotation) - height + height*Math.cos(this.rotation))
-                let tempX = x + 0.5*(width - width*Math.cos(this.rotation) + height*Math.sin(this.rotation))
-                ctx.translate(tempX,tempY)
-                ctx.rotate(this.rotation)
-                ctx.scale(scale,scale)
-                ctx.drawImage(this.img, 0, 0, this.img.width, this.img.height)
-                ctx.restore()
-                // save data
-                this.imgX = x
-                this.imgY = y
-                this.imgScale = scale
+                x = (canvasWidth - width) * 0.5
+                y = (canvasHeight - height) * 0.5
                 this.imgNextX = x
                 this.imgNextY = y
                 this.imgNextScale = scale
-                this.rotation = 0
-                this.nextRoatetion =0
+                this.nextRotation = 0
+                this.standardDraw(this.ctx)
             }
             this.img.src = url
         }
         // scale OR move
-        redraw(ctx){
+        redraw(){
+            let ctx = this.ctx
             // do nothing when no changed
             if (this.imgX === this.imgNextX
                 && this.imgY === this.imgNextY
                 && this.imgScale === this.imgNextScale
-                && this.rotation === this.nextRoatetion) {
+                && this.rotation === this.nextRotation) {
                 return false
             }
             // redraw when change happen
-            // clear
-            ctx.clearRect(0, 0, this.width, this.height)
-            this.drawCover(ctx)
-            let width = this.imgNextScale * this.img.width,
-                height = this.imgNextScale * this.img.height
-            // draw
-            ctx.save()
-            ctx.globalCompositeOperation = 'destination-over'
-            let y =this.imgNextY - 0.5*(width*Math.sin(this.nextRoatetion) - height + height*Math.cos(this.nextRoatetion)),
-                x = this.imgNextX + 0.5*(width - width*Math.cos(this.nextRoatetion) + height*Math.sin(this.nextRoatetion))
-            ctx.translate(x,y)
-            ctx.rotate(this.nextRoatetion)
-            ctx.scale(this.imgNextScale,this.imgNextScale)
-            ctx.drawImage(this.img, 0, 0, this.img.width, this.img.height)
-            ctx.restore()
-            this.imgX = this.imgNextX
-            this.imgY = this.imgNextY
-            this.imgScale = this.imgNextScale
-            this.rotation = this.nextRoatetion
+            this.standardDraw()
         }
         /*
          * clip
@@ -330,14 +341,17 @@
             _ctx.translate(x,y)
             _ctx.rotate(this.rotation)
             _ctx.scale(scale,scale)
-            // smooth
-            _ctx.imageSmoothingEnabled = true;
-            _ctx.mozImageSmoothingEnabled = true;
-            _ctx.webkitImageSmoothingEnabled = true;
-            _ctx.msImageSmoothingEnabled = true;
+
             _ctx.drawImage(this.img, 0, 0, this.img.width, this.img.height)
             _ctx.restore()
-            // _ctx.scale(1/8,1/8)
+            // this.standardDraw(_ctx, {
+            //     height: dHeight,
+            //     width: dWidth,
+            //     imgNextScale: scale,
+            //     doNotSave: true,
+            //     imgNextX: this.imgX,
+            //     imgNextY: this.imgNextY
+            // })
             // to data url
             let data = this.outputCanvas.toDataURL(type, quality)
             if (format === 'base64') {

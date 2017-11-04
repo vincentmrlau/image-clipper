@@ -42,50 +42,63 @@
         <img id="result" src="" alt=""><img id="result-circle" src="" alt="">
     </p>
     <script src="Clipper.js"></script>
+    <script src="stats.min.js"></script>
     <script>
+      (function () {
+        /*
+        * start.js
+        * */
+        let stats = new Stats()
+        stats.showPanel(0)
+        document.body.appendChild(stats.dom)
         /*
         * demo by vincent lau
         * */
         let container = document.getElementById('clipper-container')
         document.body.onload = function () {
-            let clipper = new Clipper(container, {
-                coverShape: 'circle',
-                coverColor: '#000000',
-                coverSize: 0.8,
-                coverOpacity: 0.8
-            })
-            document.getElementById('file').onchange = function (event) {
-                let fileReader = new FileReader()
-                fileReader.onload = function (e) {
-                    clipper.drawImg(e.target.result)
-                }
-                fileReader.readAsDataURL(event.target.files[0])
+          let clipper = new Clipper(container, {
+            coverShape: 'circle',
+            coverColor: '#000000',
+            coverSize: 0.8,
+            coverOpacity: 0.4,
+            beforeAF () {
+              stats.begin()
+            },
+            afterAF () {
+              stats.end()
             }
-            // debug
-//            clipper.drawImg('/images/clip.png')
-            //rotate
-            document.getElementById('clockwise').onclick = function () {
-                clipper.nextRoatetion -= 0.1
+          })
+          document.getElementById('file').onchange = function (event) {
+            let fileReader = new FileReader()
+            fileReader.onload = function (e) {
+              clipper.drawImg(e.target.result)
             }
-            document.getElementById('anticlockwise').onclick = function () {
-                clipper.nextRoatetion += 0.1
-            }
-            // clip
-            document.getElementById('clip').onclick = function () {
-                clipper.clip(function (data) {
+            fileReader.readAsDataURL(event.target.files[0])
+          }
+          //rotate
+          document.getElementById('clockwise').onclick = function () {
+            clipper.nextRotation -= 0.1
+          }
+          document.getElementById('anticlockwise').onclick = function () {
+            clipper.nextRotation += 0.1
+          }
+          // clip
+          document.getElementById('clip').onclick = function () {
+            clipper.clip(function (data) {
 //                    toBlob
 //                    let fileReader = new FileReader()
 //                    fileReader.onload = function (e) {
 //                        document.getElementById('result').src = e.target.result
 //                    }
 //                    fileReader.readAsDataURL(data)
-                    document.getElementById('result').src = data
-                    document.getElementById('result-circle').src = data
-                }, {
-                    format: 'base64'
-                })
-            }
+              document.getElementById('result').src = data
+              document.getElementById('result-circle').src = data
+            }, {
+              format: 'base64'
+            })
+          }
         }
+      })()
     </script>
 </body>
 </html>
